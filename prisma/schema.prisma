@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Expense {
+  id         String    @id @db.Uuid
+  title      String
+  amount     Decimal   @db.Decimal(14, 2)
+  currency   String
+  type       String
+  category   String
+  occurredAt DateTime
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([occurredAt])
+  @@index([updatedAt])
+  @@index([deletedAt])
+}
+
+model Category {
+  id        String    @id @db.Uuid
+  name      String
+  type      String
+  icon      String?
+  color     String?
+  isDefault Boolean   @default(false)
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([updatedAt])
+  @@index([deletedAt])
+}
+
+model SyncMeta {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

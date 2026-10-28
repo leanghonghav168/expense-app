@@ -1,0 +1,23 @@
+export function useNetwork() {
+  const isOnline = ref(true)
+
+  if (import.meta.client) {
+    isOnline.value = navigator.onLine
+
+    const setOnline = () => { isOnline.value = true }
+    const setOffline = () => { isOnline.value = false }
+
+    onMounted(() => {
+      isOnline.value = navigator.onLine
+      window.addEventListener('online', setOnline)
+      window.addEventListener('offline', setOffline)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('online', setOnline)
+      window.removeEventListener('offline', setOffline)
+    })
+  }
+
+  return { isOnline }
+}
