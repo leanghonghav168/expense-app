@@ -7,8 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+  username  String     @unique
+  password  String
+  name      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  expenses   Expense[]
+  categories Category[]
+  passkeys   Passkey[]
+}
+
+model Passkey {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String   @unique
+  publicKey    Bytes
+  counter      BigInt   @default(0)
+  deviceType   String?
+  backedUp     Boolean  @default(false)
+  transports   String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
 model Expense {
   id         String    @id @db.Uuid
+  userId     String?   @db.Uuid
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title      String
   amount     Decimal   @db.Decimal(14, 2)
   currency   String
@@ -19,6 +49,7 @@ model Expense {
   deletedAt  DateTime?
   createdAt  DateTime  @default(now())
 
+  @@index([userId])
   @@index([occurredAt])
   @@index([updatedAt])
   @@index([deletedAt])
@@ -26,6 +57,8 @@ model Expense {
 
 model Category {
   id        String    @id @db.Uuid
+  userId    String?   @db.Uuid
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   type      String
   icon      String?
@@ -35,6 +68,7 @@ model Category {
   deletedAt DateTime?
   createdAt DateTime  @default(now())
 
+  @@index([userId])
   @@index([updatedAt])
   @@index([deletedAt])
 }

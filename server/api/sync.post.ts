@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
+import { getAuthUser } from '../utils/jwt'
 
 const syncPayloadSchema = z.object({
   lastPulledAt: z.string().datetime().optional().nullable(),
@@ -31,6 +32,9 @@ const syncPayloadSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const authUser = await getAuthUser(event)
+  const userId = authUser?.id || null
+
   const rawBody = await readBody(event)
   const validation = syncPayloadSchema.safeParse(rawBody)
 
@@ -57,6 +61,7 @@ export default defineEventHandler(async (event) => {
           where: { id: cat.id },
           create: {
             id: cat.id,
+            userId: userId,
             name: cat.name,
             type: cat.type,
             icon: cat.icon || null,
@@ -66,6 +71,7 @@ export default defineEventHandler(async (event) => {
             deletedAt: cat.deletedAt ? new Date(cat.deletedAt) : null
           },
           update: {
+            userId: userId || undefined,
             name: cat.name,
             type: cat.type,
             icon: cat.icon || null,
@@ -87,6 +93,7 @@ export default defineEventHandler(async (event) => {
           where: { id: exp.id },
           create: {
             id: exp.id,
+            userId: userId,
             title: exp.title,
             amount: exp.amount,
             currency: exp.currency,
@@ -97,6 +104,7 @@ export default defineEventHandler(async (event) => {
             deletedAt: exp.deletedAt ? new Date(exp.deletedAt) : null
           },
           update: {
+            userId: userId || undefined,
             title: exp.title,
             amount: exp.amount,
             currency: exp.currency,
@@ -117,12 +125,14 @@ export default defineEventHandler(async (event) => {
   const [serverExpenses, serverCategories] = await Promise.all([
     prisma.expense.findMany({
       where: {
-        updatedAt: { gt: filterDate }
+        updatedAt: { gt: filterDate },
+        ...(userId ? { OR: [{ userId }, { userId: null }] } : {})
       }
     }),
     prisma.category.findMany({
       where: {
-        updatedAt: { gt: filterDate }
+        updatedAt: { gt: filterDate },
+        ...(userId ? { OR: [{ userId }, { userId: null }] } : {})
       }
     })
   ])

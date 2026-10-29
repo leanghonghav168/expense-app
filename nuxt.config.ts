@@ -10,6 +10,10 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
+  runtimeConfig: {
+    jwtSecret: process.env.JWT_SECRET || 'expense-tracker-super-secret-jwt-key-2026'
+  },
+
   compatibilityDate: '2025-07-15',
 
   css: ['~/assets/css/main.css'],

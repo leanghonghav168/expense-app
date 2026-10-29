@@ -5,6 +5,113 @@
       <p class="text-xs text-slate-500">Manage categories, storage, and PWA setup</p>
     </div>
 
+    <!-- User Account & JWT Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">User Account</h3>
+        <span
+          class="px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+          :class="isAuthenticated ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'"
+        >
+          {{ isAuthenticated ? 'JWT Authenticated' : 'Guest Mode' }}
+        </span>
+      </div>
+
+      <div v-if="isAuthenticated && user" class="space-y-3">
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+          <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm uppercase shadow-sm">
+            {{ user.name ? user.name.charAt(0) : user.username.charAt(0) }}
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-slate-900 text-sm truncate">{{ user.name || user.username }}</p>
+            <p class="text-xs text-slate-500 truncate">@{{ user.username }}</p>
+          </div>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            @click="logout"
+          >
+            Sign Out
+          </button>
+        </div>
+
+        <!-- Biometric Face ID / Passkey Section -->
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+              </svg>
+              <span>Face ID / Passkey</span>
+            </div>
+            
+            <button
+              v-if="isSupported"
+              type="button"
+              :disabled="isPasskeyLoading"
+              class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+              @click="handleRegisterPasskey"
+            >
+              <span>{{ isPasskeyLoading ? 'Prompting...' : '+ Enable Face ID' }}</span>
+            </button>
+          </div>
+
+          <div v-if="passkeyError" class="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-[11px]">
+            {{ passkeyError }}
+          </div>
+
+          <!-- Registered Passkeys List -->
+          <div v-if="passkeys.length > 0" class="space-y-1.5">
+            <div
+              v-for="pk in passkeys"
+              :key="pk.id"
+              class="flex items-center justify-between p-2 bg-emerald-50/60 border border-emerald-100 rounded-xl text-xs"
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500" />
+                <div>
+                  <p class="font-semibold text-emerald-900">
+                    {{ pk.deviceType === 'singleDevice' ? 'This Device (Face ID)' : 'Synced Passkey (iCloud Keychain)' }}
+                  </p>
+                  <p class="text-[10px] text-emerald-700">Added on {{ new Date(pk.createdAt).toLocaleDateString() }}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="text-rose-500 hover:text-rose-700 p-1 text-[11px] font-semibold cursor-pointer"
+                @click="deletePasskey(pk.id)"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+          <p v-else class="text-[11px] text-slate-500">
+            Sign in faster on iPhone using Apple Face ID without typing your password.
+          </p>
+        </div>
+      </div>
+
+      <div v-else class="space-y-3">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          You are currently using local storage. Log in with your username and password to sync your expenses with the PostgreSQL database.
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <NuxtLink
+            to="/login"
+            class="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold text-center shadow-sm transition-all"
+          >
+            Sign In
+          </NuxtLink>
+          <NuxtLink
+            to="/login?tab=register"
+            class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold text-center transition-all border border-slate-200"
+          >
+            Create Account
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+
     <!-- Category Management Section -->
     <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
       <div class="flex items-center justify-between">
@@ -364,12 +471,24 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '~/composables/useAuth'
+import { usePasskey } from '~/composables/usePasskey'
 import { useExpenses } from '~/composables/useExpenses'
 import { useCategories } from '~/composables/useCategories'
 import { useSync } from '~/composables/useSync'
 import { useNetwork } from '~/composables/useNetwork'
 import { expenseDb, type Category } from '~/utils/expense-db'
 
+const { user, isAuthenticated, logout } = useAuth()
+const {
+  isSupported,
+  isLoading: isPasskeyLoading,
+  passkeyError,
+  passkeys,
+  fetchPasskeys,
+  registerPasskey,
+  deletePasskey
+} = usePasskey()
 const { expenses, pendingSyncCount, refresh: refreshExpenses } = useExpenses()
 const { isOnline } = useNetwork()
 const { sync, isSyncing, lastSyncedAt, lastSyncError } = useSync()
@@ -425,7 +544,22 @@ async function wipeAllData() {
 
 onMounted(async () => {
   await Promise.all([refreshExpenses(), refreshCategories()])
+  if (isAuthenticated.value) {
+    await fetchPasskeys()
+  }
 })
+
+watch(isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    fetchPasskeys()
+  } else {
+    passkeys.value = []
+  }
+})
+
+async function handleRegisterPasskey() {
+  await registerPasskey()
+}
 
 const activeCategoryList = computed(() => {
   return categoryTab.value === 'expense' ? expenseCategories.value : incomeCategories.value

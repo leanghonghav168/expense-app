@@ -9,6 +9,7 @@ export function useSync() {
 
   const { refresh: refreshExpenses } = useExpenses()
   const { refresh: refreshCategories } = useCategories()
+  const token = useCookie<string | null>('auth_token')
 
   async function sync() {
     if (!import.meta.client || isSyncing.value) return
@@ -32,6 +33,7 @@ export function useSync() {
         serverCategories: Category[]
       }>('/api/sync', {
         method: 'POST',
+        headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
         body: {
           lastPulledAt,
           clientExpenses: unsyncedExpenses.map(e => ({
