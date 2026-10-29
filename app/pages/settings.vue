@@ -166,6 +166,39 @@
       </div>
     </div>
 
+    <!-- Data Management & Reset -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+      <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Data Management</h3>
+      
+      <div class="flex items-center justify-between py-2 border-b border-slate-100 text-xs">
+        <div>
+          <p class="font-semibold text-slate-900">Starter Categories</p>
+          <p class="text-[11px] text-slate-500">Optionally load default categories on demand</p>
+        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all"
+          @click="handleSeedDefaults"
+        >
+          Load Defaults
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between py-2 text-xs">
+        <div>
+          <p class="font-semibold text-rose-700">Wipe All Data</p>
+          <p class="text-[11px] text-slate-500">Clear all transactions and categories (local & server)</p>
+        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+          @click="showWipeConfirm = true"
+        >
+          Reset All
+        </button>
+      </div>
+    </div>
+
     <!-- Add/Edit Category Modal -->
     <div
       v-if="showCategoryModal"
@@ -288,6 +321,45 @@
       </div>
     </div>
 
+    <!-- Wipe Confirmation Modal -->
+    <div
+      v-if="showWipeConfirm"
+      class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+    >
+      <div class="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl space-y-4">
+        <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+
+        <div class="text-center space-y-1">
+          <h3 class="text-sm font-bold text-slate-900">Wipe All Data?</h3>
+          <p class="text-xs text-slate-500">
+            This will permanently remove all transactions and categories from both your local browser storage and the PostgreSQL database.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2 text-xs font-semibold">
+          <button
+            type="button"
+            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl"
+            @click="showWipeConfirm = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            :disabled="isWiping"
+            class="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-xl shadow-sm"
+            @click="wipeAllData"
+          >
+            {{ isWiping ? 'Wiping...' : 'Confirm Wipe' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -296,7 +368,7 @@ import { useExpenses } from '~/composables/useExpenses'
 import { useCategories } from '~/composables/useCategories'
 import { useSync } from '~/composables/useSync'
 import { useNetwork } from '~/composables/useNetwork'
-import type { Category } from '~/utils/expense-db'
+import { expenseDb, type Category } from '~/utils/expense-db'
 
 const { expenses, pendingSyncCount, refresh: refreshExpenses } = useExpenses()
 const { isOnline } = useNetwork()
@@ -306,6 +378,7 @@ const {
   expenseCategories,
   incomeCategories,
   refresh: refreshCategories,
+  seedDefaultCategories,
   addCategory,
   updateCategory,
   deleteCategory,
@@ -313,6 +386,42 @@ const {
 } = useCategories()
 
 const categoryTab = ref<'expense' | 'income'>('expense')
+
+// Wipe and Seed states
+const showWipeConfirm = ref(false)
+const isWiping = ref(false)
+
+async function handleSeedDefaults() {
+  await seedDefaultCategories()
+  await refreshCategories()
+  if (isOnline.value) {
+    sync()
+  }
+}
+
+async function wipeAllData() {
+  isWiping.value = true
+  try {
+    // 1. Wipe local IndexedDB
+    await expenseDb.transaction('rw', [expenseDb.expenses, expenseDb.categories, expenseDb.syncMeta], async () => {
+      await expenseDb.expenses.clear()
+      await expenseDb.categories.clear()
+      await expenseDb.syncMeta.clear()
+    })
+
+    // 2. Wipe server PostgreSQL
+    if (isOnline.value) {
+      await $fetch('/api/reset', { method: 'POST' })
+    }
+
+    await Promise.all([refreshExpenses(), refreshCategories()])
+    showWipeConfirm.value = false
+  } catch (err) {
+    console.error('Failed to wipe data:', err)
+  } finally {
+    isWiping.value = false
+  }
+}
 
 onMounted(async () => {
   await Promise.all([refreshExpenses(), refreshCategories()])
@@ -364,6 +473,9 @@ async function saveCategory() {
   }
   showCategoryModal.value = false
   await refreshExpenses()
+  if (isOnline.value) {
+    sync()
+  }
 }
 
 // Delete logic with reassignment
@@ -394,6 +506,9 @@ async function confirmDeleteCategory() {
     )
     showDeleteCategoryModal.value = false
     await refreshExpenses()
+    if (isOnline.value) {
+      sync()
+    }
   } catch (err) {
     console.error('Failed to delete category:', err)
   }

@@ -89,12 +89,16 @@
 
 <script setup lang="ts">
 import { useExpenses } from '~/composables/useExpenses'
+import { useSync } from '~/composables/useSync'
+import { useNetwork } from '~/composables/useNetwork'
 import type { Expense } from '~/utils/expense-db'
 
 const route = useRoute()
 const router = useRouter()
 const id = String(route.params.id)
 const { getExpense, updateExpense, deleteExpense } = useExpenses()
+const { sync } = useSync()
+const { isOnline } = useNetwork()
 
 const expense = ref<Expense | undefined>()
 const loading = ref(true)
@@ -111,6 +115,9 @@ onMounted(async () => {
 async function handleUpdate(payload: Parameters<typeof updateExpense>[1]) {
   try {
     await updateExpense(id, payload)
+    if (isOnline.value) {
+      sync()
+    }
     router.push('/expenses')
   } catch (err) {
     console.error('Failed to update expense:', err)
@@ -120,6 +127,9 @@ async function handleUpdate(payload: Parameters<typeof updateExpense>[1]) {
 async function handleDelete() {
   try {
     await deleteExpense(id)
+    if (isOnline.value) {
+      sync()
+    }
     showDeleteConfirm.value = false
     router.push('/expenses')
   } catch (err) {

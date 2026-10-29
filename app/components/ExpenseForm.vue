@@ -66,8 +66,20 @@
       <!-- Category (Dynamic from useCategories) -->
       <div>
         <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
-        <div v-if="availableCategories.length === 0" class="text-xs text-slate-500 py-1">
-          Loading categories...
+        <div v-if="availableCategories.length === 0" class="space-y-1.5">
+          <input
+            v-model="form.category"
+            type="text"
+            required
+            placeholder="Type a category name (e.g. Food, Salary)..."
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+          />
+          <p class="text-[11px] text-slate-500 flex items-center justify-between px-1">
+            <span>No preset categories yet.</span>
+            <NuxtLink to="/settings" class="text-emerald-700 font-bold hover:underline">
+              Manage in Settings →
+            </NuxtLink>
+          </p>
         </div>
         <select
           v-else

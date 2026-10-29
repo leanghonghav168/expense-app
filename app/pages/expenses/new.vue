@@ -21,16 +21,42 @@
 
 <script setup lang="ts">
 import { useExpenses } from '~/composables/useExpenses'
+import { useCategories } from '~/composables/useCategories'
+import { useSync } from '~/composables/useSync'
+import { useNetwork } from '~/composables/useNetwork'
 
 const route = useRoute()
 const router = useRouter()
 const { addExpense } = useExpenses()
+const { categories, addCategory, refresh: refreshCategories } = useCategories()
+const { sync } = useSync()
+const { isOnline } = useNetwork()
+
+onMounted(async () => {
+  await refreshCategories()
+})
 
 const initialType = computed(() => (route.query.type === 'income' ? 'income' : 'expense'))
 
 async function handleSave(payload: Parameters<typeof addExpense>[0]) {
   try {
+    // If entered category doesn't exist yet, auto-create it
+    const existingCat = categories.value.find(c => c.name.toLowerCase() === payload.category.toLowerCase())
+    if (!existingCat) {
+      await addCategory({
+        name: payload.category,
+        type: payload.type,
+        icon: payload.type === 'income' ? '💰' : '📦'
+      })
+    }
+
     await addExpense(payload)
+
+    // Instantly sync to PostgreSQL if connected
+    if (isOnline.value) {
+      sync()
+    }
+
     router.push('/')
   } catch (err) {
     console.error('Failed to save expense:', err)

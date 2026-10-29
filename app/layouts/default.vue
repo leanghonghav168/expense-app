@@ -12,7 +12,7 @@
             </div>
             <div>
               <h1 class="font-bold text-slate-900 leading-tight text-base">Expense Tracker</h1>
-              <p class="text-[10px] text-slate-500 font-medium">Personal Finance PWA</p>
+              <p class="text-[10px] text-slate-500 font-medium">Personal Finance PWA (V:1.1.0)</p>
             </div>
           </NuxtLink>
 

@@ -4,31 +4,29 @@ export function useCategories() {
   const categories = ref<Category[]>([])
   const loading = ref(false)
 
-  async function ensureDefaultCategories() {
+  // Manual seeding only (no longer automatic on startup)
+  async function seedDefaultCategories() {
     if (!import.meta.client) return
-    const count = await expenseDb.categories.count()
-    if (count === 0) {
-      const now = new Date().toISOString()
-      const initial: Category[] = DEFAULT_CATEGORIES.map(cat => ({
-        id: crypto.randomUUID(),
-        name: cat.name,
-        type: cat.type,
-        icon: cat.icon,
-        color: cat.color,
-        isDefault: true,
-        createdAt: now,
-        updatedAt: now,
-        synced: false
-      }))
-      await expenseDb.categories.bulkPut(initial)
-    }
+    const now = new Date().toISOString()
+    const initial: Category[] = DEFAULT_CATEGORIES.map(cat => ({
+      id: crypto.randomUUID(),
+      name: cat.name,
+      type: cat.type,
+      icon: cat.icon,
+      color: cat.color,
+      isDefault: true,
+      createdAt: now,
+      updatedAt: now,
+      synced: false
+    }))
+    await expenseDb.categories.bulkPut(initial)
+    await refresh()
   }
 
   async function refresh() {
     if (!import.meta.client) return
     loading.value = true
     try {
-      await ensureDefaultCategories()
       const all = await expenseDb.categories
         .filter(c => !c.deletedAt)
         .toArray()
@@ -156,6 +154,7 @@ export function useCategories() {
     incomeCategories,
     loading,
     refresh,
+    seedDefaultCategories,
     addCategory,
     updateCategory,
     deleteCategory,
