@@ -36,8 +36,8 @@
           class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
         >
           <option value="ALL">All Currency</option>
-          <option value="USD">USD ($)</option>
           <option value="KHR">KHR (៛)</option>
+          <option value="USD">USD ($)</option>
         </select>
       </div>
 

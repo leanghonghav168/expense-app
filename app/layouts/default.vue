@@ -8,7 +8,7 @@
         <div class="h-14 flex items-center justify-between">
           <NuxtLink to="/" class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-              $
+              ៛
             </div>
             <div>
               <h1 class="font-bold text-slate-900 leading-tight text-base">Expense Tracker</h1>
@@ -93,13 +93,13 @@
             </NuxtLink>
 
             <!-- Center Floating Add Button -->
-            <div class="flex-1 flex justify-center -mt-6">
+            <div class="flex-1 flex justify-center -mt-16">
               <NuxtLink
                 to="/expenses/new"
-                class="w-13 h-13 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:bg-emerald-700 active:scale-95 transition-all border-4 border-white"
+                class="w-24 h-24 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:bg-emerald-700 active:scale-95 transition-all border-4 border-white"
                 title="Add Transaction"
               >
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                 </svg>
               </NuxtLink>

@@ -44,8 +44,8 @@
               v-model="form.currency"
               class="bg-white border border-slate-200 text-xs font-semibold text-slate-700 rounded-lg py-1.5 px-2 focus:outline-none"
             >
-              <option value="USD">USD ($)</option>
               <option value="KHR">KHR (៛)</option>
+              <option value="USD">USD ($)</option>
             </select>
           </div>
         </div>
@@ -156,7 +156,7 @@ const errorMessage = ref('')
 const form = reactive({
   title: props.initialData.title || '',
   amount: props.initialData.amount || ('' as unknown as number),
-  currency: (props.initialData.currency || 'USD') as 'USD' | 'KHR',
+  currency: (props.initialData.currency || 'KHR') as 'USD' | 'KHR',
   type: (props.initialData.type || 'expense') as 'income' | 'expense',
   category: props.initialData.category || '',
   date: props.initialData.occurredAt

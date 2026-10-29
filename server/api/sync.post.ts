@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { Prisma } from '@prisma/client'
 import { prisma } from '../utils/prisma'
 
 const syncPayloadSchema = z.object({
@@ -89,7 +88,7 @@ export default defineEventHandler(async (event) => {
           create: {
             id: exp.id,
             title: exp.title,
-            amount: new Prisma.Decimal(exp.amount),
+            amount: exp.amount,
             currency: exp.currency,
             type: exp.type,
             category: exp.category,
@@ -99,7 +98,7 @@ export default defineEventHandler(async (event) => {
           },
           update: {
             title: exp.title,
-            amount: new Prisma.Decimal(exp.amount),
+            amount: exp.amount,
             currency: exp.currency,
             type: exp.type,
             category: exp.category,

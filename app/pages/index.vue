@@ -12,18 +12,18 @@
         <button
           type="button"
           class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
-          :class="activeCurrency === 'USD' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'"
-          @click="activeCurrency = 'USD'"
-        >
-          USD ($)
-        </button>
-        <button
-          type="button"
-          class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
           :class="activeCurrency === 'KHR' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'"
           @click="activeCurrency = 'KHR'"
         >
           KHR (៛)
+        </button>
+        <button
+          type="button"
+          class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
+          :class="activeCurrency === 'USD' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'"
+          @click="activeCurrency = 'USD'"
+        >
+          USD ($)
         </button>
       </div>
     </div>
@@ -172,7 +172,7 @@
 <script setup lang="ts">
 import { useExpenses } from '~/composables/useExpenses'
 
-const activeCurrency = ref<'USD' | 'KHR'>('USD')
+const activeCurrency = ref<'USD' | 'KHR'>('KHR')
 const { expenses, refresh } = useExpenses()
 
 onMounted(async () => {
