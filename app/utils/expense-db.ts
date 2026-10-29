@@ -31,12 +31,12 @@ export interface SyncMeta {
   value: string
 }
 
-// export const DEFAULT_CATEGORIES: Array<{
-//   name: string
-//   type: 'income' | 'expense'
-//   icon: string
-//   color: string
-// }> 
+export const DEFAULT_CATEGORIES: Array<{
+  name: string
+  type: 'income' | 'expense'
+  icon: string
+  color: string
+}> = []
 
 class ExpenseDatabase extends Dexie {
   expenses!: Table<Expense, string>
